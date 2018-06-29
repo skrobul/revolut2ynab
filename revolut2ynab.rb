@@ -35,7 +35,42 @@ module Revolut
       desc.split(' FX Rate ')
     end
   end
+
+  YNABTransaction = Struct.new(:date, :payee, :memo, :inflow, :outflow)
+  class YNABStatement
+    attr_reader :transactions
+    def self.from_revolut(rev)
+      new_statement = new
+      transactions = rev.transactions.map { |r| YNABTransaction.new(r.date, r.description, r.category, r.paid_in, r.paid_out) }
+      new_statement.instance_variable_set(:@transactions, transactions)
+      new_statement
+    end
+
+    def to_csv
+      output = "Date,Payee,Memo,Outflow,Inflow\n"
+      transactions.each do |transaction|
+        output += "#{transaction.date.iso8601},"
+        output += "#{transaction.payee},"
+        output += "#{transaction.memo},"
+        output += "#{transaction.outflow},"
+        output += "#{transaction.inflow}"
+        output += "\n"
+      end
+      output
+    end
+
+    def save_csv(path)
+      File.open(path, 'w') { |f| f.write(to_csv) }
+    end
+  end
 end
 
 
+if $PROGRAM_NAME == __FILE__
+  input, output = ARGV
+  abort "\n#{$0} <revolut_statement.csv> <desired_output.csv>" unless input && output
+
+  revolut_statement = Revolut::Statement.new(input)
+  Revolut::YNABStatement.from_revolut(revolut_statement).save_csv('output.csv')
+end
 #Revolut::Statement.new($1)
