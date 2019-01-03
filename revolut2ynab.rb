@@ -22,7 +22,7 @@ module Revolut
           row.fetch('Paid In (GBP) ').strip.to_f,
           row.fetch('Exchange Out').lstrip.rstrip,
           row.fetch('Exchange In').lstrip.rstrip,
-          Float(row.fetch('Balance (GBP)')),
+          Float(row.fetch('Balance (GBP)').sub(',', '')),
           row.fetch('Category'),
           row.fetch('Notes')
         )
