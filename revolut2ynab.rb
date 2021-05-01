@@ -41,7 +41,16 @@ module Revolut
     attr_reader :transactions
     def self.from_revolut(rev)
       new_statement = new
-      transactions = rev.transactions.map { |r| YNABTransaction.new(r.date, r.description, r.category, r.paid_in, r.paid_out) }
+      transactions = rev.transactions.map do |r|
+        memo = if !r.exchange_out.empty?
+                 "#{r.category} #{r.exchange_out}"
+               elsif !r.exchange_in.empty?
+                 "#{r.category} #{r.exchange_in}"
+               else
+                 r.category
+               end
+        YNABTransaction.new(r.date, r.description, memo, r.paid_in, r.paid_out)
+      end
       new_statement.instance_variable_set(:@transactions, transactions)
       new_statement
     end
